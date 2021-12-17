@@ -1,6 +1,6 @@
 <template>
 <el-container>
-        <!--隐藏的表单-->
+<!--发布商品的表单-->
 <el-dialog title="新商品详情" :visible.sync="dialogFormVisible">
     <el-form :model="form">
     <el-form-item label="商品名称" :label-width="formLabelWidth">
@@ -21,6 +21,29 @@
     <el-button type="primary" @click="newCommodity">确 定</el-button>
   </div>
 </el-dialog>
+
+<!--用于更改商品信息的表单-->
+<el-dialog title="新商品详情" :visible.sync="updateFormVisible">
+    <el-form :model="updateForm">
+    <el-form-item label="商品名称" :label-width="formLabelWidth">
+      <el-input v-model="updateForm.name" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="商品描述" :label-width="formLabelWidth">
+      <el-input type="textarea" v-model="updateForm.msg"></el-input>
+    </el-form-item>
+    <el-form-item label="单价" :label-width="formLabelWidth">
+      <el-input  v-model="updateForm.price"></el-input>
+    </el-form-item>
+    <el-form-item label="现有库存" :label-width="formLabelWidth">
+      <el-input  v-model="updateForm.reserve"></el-input>
+    </el-form-item>
+  </el-form>
+  <div slot="footer" class="dialog-footer">
+    <el-button @click="updateFormVisible = false">取 消</el-button>
+    <el-button type="primary" @click="updateCommodity">确 定</el-button>
+  </div>
+</el-dialog>
+
   <el-header>
       <el-menu
   :default-active="activeIndex"
@@ -31,13 +54,16 @@
   active-text-color="#ffd04b">
   <el-menu-item index="1"><el-link href='/index/show'>购物中心</el-link></el-menu-item>
   <el-menu-item index="2"><el-link href='/user/info'>个人空间</el-link></el-menu-item>
-  <el-menu-item index="3"><el-link @click="logout">登出</el-link></el-menu-item>
+  <el-menu-item index="3"><el-link href='/user/cart'>我的购物车</el-link></el-menu-item>
+  <el-menu-item index="4"><el-link @click="logout">登出</el-link></el-menu-item>
 </el-menu>
   </el-header>
   <el-main>    
 <el-descriptions title="用户信息" class="info-form" :data="info">
     <template slot="extra">
-      <el-button type="success" size="big" v-show='is_sale' @click="dialogFormVisible=true">上架新商品</el-button>
+      <el-button type="success" size="small" v-show='is_sale' @click="dialogFormVisible=true" round>上架新商品</el-button>
+      <el-button type="primary" size="small" v-show='is_sale' @click="show_sale" round>销售详情</el-button>
+      <el-button type="info" size="small" v-show='is_sale' @click="show_log" round>销售日志</el-button>
     </template>
     <el-descriptions-item label="用户名" prop="name">{{ info.name }}</el-descriptions-item>
     <el-descriptions-item label="用户id">{{ info.id }}</el-descriptions-item>
@@ -127,21 +153,22 @@ export default{
     data() {
         return {
             dialogFormVisible:false,
-            form: {
-                name: '',
-                region: '',
-                date1: '',
-                date2: '',
-                delivery: false,
-                type: [],
-                resource: '',
-                desc: ''
+            updateFormVisible:false,
+            form:{
+              name:''
+            },
+            updateForm:{
+              name:'',
+              msg:'',
+              price:'',
+              reserve:''
             },
             formLabelWidth: '120px',
             is_sale:false,
             activeIndex: '2',
             info: {},
-            tableData:[{}]
+            tableData:[{}],
+            tmp_row:{}
         };
     },
     methods:{
@@ -225,6 +252,14 @@ export default{
             });          
             });
         },
+        updateRow(index,data){
+            this.updateFormVisible = true;
+            this.tmp_row = data[index]
+            this.updateForm.name = this.tmp_row.name;
+            this.updateForm.msg = this.tmp_row.msg;
+            this.updateForm.price = this.tmp_row.price;
+            this.updateForm.reserve = this.tmp_row.reserve;
+        },
         newCommodity(){
             this.dialogFormVisible = false;
             var name = this.form.name;
@@ -237,7 +272,6 @@ export default{
             }else{
                 let data = {"name":name,"msg":msg,"price":Number(price),"reserve":Number(reserve)}
                 this.Axios.post('/api/shop/add',this.qs.stringify(data)).then(res=>{
-                    console.log(res);
                     if(res.data == 1){
                         this.openHTML("发布成功");
                         location.reload();
@@ -246,7 +280,33 @@ export default{
                     console.log(error);
                 })
             }
-
+        },
+        updateCommodity(){
+          this.updateFormVisible = false;
+          var name = this.updateForm.name;
+          var msg = this.updateForm.msg;
+          var price = this.updateForm.price;
+          var reserve = this.updateForm.reserve;
+          if(name.length==0 || msg.length==0|| price.length==0|| reserve.length==0){
+                this.openHTML("参数不能为空");
+          }else{
+            var row = this.tmp_row;
+            let data = {"name":name,"msg":msg,"price":Number(price),"reserve":Number(reserve),"sale_num":row.sale_num,"income":row.income,"id":row.id}
+            this.Axios.post('/api/shop/update',this.qs.stringify(data)).then(res=>{
+              if(res.data == 1){
+                this.openHTML("修改成功");
+                location.reload();
+              }
+            }).catch(error=>{
+              console.log(error);
+            })
+          }
+        },
+        show_sale(){
+          window.location.href='/sales/show'
+        },
+        show_log(){
+          window.location.href='/sales/log'
         }
     }
 }

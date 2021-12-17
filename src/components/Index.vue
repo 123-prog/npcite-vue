@@ -11,7 +11,8 @@
   active-text-color="#ffd04b">
   <el-menu-item index="1">购物中心</el-menu-item>
   <el-menu-item index="2"><el-link href='/user/info'>个人空间</el-link></el-menu-item>
-  <el-menu-item index="3"><el-link @click="logout">登出</el-link></el-menu-item>
+  <el-menu-item index="3"><el-link href='/user/cart'>我的购物车</el-link></el-menu-item>
+  <el-menu-item index="4"><el-link @click="logout">登出</el-link></el-menu-item>
 </el-menu>
 </el-header>
   <el-main>
@@ -53,6 +54,19 @@
     <el-table-column
       label="描述"
       prop="msg">
+    </el-table-column>
+    <el-table-column
+      fixed="right"
+      label="操作"
+      width="120">
+      <template slot-scope="scope">
+        <el-button
+          @click.native.prevent="addCart(scope.$index, tableData)"
+          type="text"
+          size="small">
+          加入购物车
+        </el-button>
+      </template>
     </el-table-column>
   </el-table>
   </el-main>
@@ -99,6 +113,18 @@
           }else{
             this.openHTML("登出失败");
           }
+        })
+      },
+      addCart(index,data){
+        var row = data[index]
+        this.Axios.get('/api/user/addCommodity?id='+row.id).then(res=>{
+          if(res.data.code==200){
+            this.openHTML('添加至购物车成功');
+          }else{
+            this.openHTML('添加失败');
+          }
+        }).catch(error=>{
+          console.log(error);
         })
       }
     }
