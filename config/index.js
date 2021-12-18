@@ -12,7 +12,7 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/api/**':{
-        target: 'http://localhost:8080',
+        target: 'http://springboot:8080',
         pathRewrite: {
           '^/api': ' '   //实际请求去掉/api以空字符串代替 
         }
